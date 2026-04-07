@@ -1,0 +1,372 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+@keyframes tourFadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/*
+  THEME TOKEN GUIDE
+  ---------------------------------------------------------------------------
+  surface-canvas    darkest bg (preview area behind paper)
+  surface-base      app background
+  surface-card      panel / sidebar surfaces
+  surface-elevated  transitional -- slight Color B lean on dual themes
+  surface-border    Color B on dual themes; mid-tone on mono
+  surface-hover     Color B (stronger) on dual themes; mid-tone on mono
+  accent-primary    Color A at full vibrancy
+  accent-secondary  Color B at full vibrancy
+  ink-rgb           255 255 255 on dark themes; 30 22 10 on Order
+
+  DUAL THEME ZONE MODEL:
+  Color A owns canvas + base + card  (atmosphere -- where you live)
+  Color B owns elevated + border + hover  (interaction -- what activates)
+
+  COLOR A / COLOR B:
+  Black-paired -> black is A (dark grey, never pure #000)
+  White-paired -> white is B (warm gold/ivory, never pure #fff)
+  Flux  (U/R)  -> blue atmosphere, red interaction
+  Adapt (G/U)  -> blue atmosphere, green interaction
+  Fury  (R/G)  -> red atmosphere, green interaction
+*/
+
+
+/* =============================================================================
+   ROOT DEFAULTS -- Spark values. :root must precede all theme blocks.
+============================================================================= */
+:root {
+  --surface-canvas:       #0b0c0d;
+  --surface-base:         #0f1011;
+  --surface-card:         #151618;
+  --surface-elevated:     #1c1d20;
+  --surface-border:       #252729;
+  --surface-hover:        #1f2123;
+  --accent-primary-rgb:   232 64 16;
+  --accent-primary:       #e84010;
+  --accent-secondary-rgb: 184 48 16;
+  --accent-secondary:     #b83010;
+  --ink-rgb:              255 255 255;
+}
+
+
+/* =============================================================================
+   MONO THEMES
+============================================================================= */
+
+[data-theme="order"] {
+  --surface-canvas:       #e8e0d0;
+  --surface-base:         #ede7d9;
+  --surface-card:         #f2ece0;
+  --surface-elevated:     #f7f2e8;
+  --surface-border:       #d4cbb8;
+  --surface-hover:        #ddd4c0;
+  --accent-primary-rgb:   192 148 28;
+  --accent-primary:       #c0941c;
+  --accent-secondary-rgb: 42 34 24;
+  --accent-secondary:     #2a2218;
+  --ink-rgb:              0 0 0;
+}
+
+/* Order light-theme text opacity remapping — compensates for low-opacity ink on light surfaces */
+[data-theme="order"] .text-ink\/10 { color: rgb(0 0 0 / 0.32); }
+[data-theme="order"] .text-ink\/15 { color: rgb(0 0 0 / 0.40); }
+[data-theme="order"] .text-ink\/20 { color: rgb(0 0 0 / 0.50); }
+[data-theme="order"] .text-ink\/25 { color: rgb(0 0 0 / 0.60); }
+[data-theme="order"] .text-ink\/30 { color: rgb(0 0 0 / 0.68); }
+[data-theme="order"] .text-ink\/35 { color: rgb(0 0 0 / 0.74); }
+[data-theme="order"] .text-ink\/40 { color: rgb(0 0 0 / 0.79); }
+[data-theme="order"] .text-ink\/45 { color: rgb(0 0 0 / 0.83); }
+[data-theme="order"] .text-ink\/50 { color: rgb(0 0 0 / 0.87); }
+[data-theme="order"] .text-ink\/60 { color: rgb(0 0 0 / 0.90); }
+[data-theme="order"] .text-ink\/70 { color: rgb(0 0 0 / 0.93); }
+[data-theme="order"] .text-ink\/80 { color: rgb(0 0 0 / 0.96); }
+[data-theme="order"] .text-ink\/90 { color: rgb(0 0 0 / 0.98); }
+
+[data-theme="ambition"] {
+  --surface-canvas:       #0a0a0a;
+  --surface-base:         #101010;
+  --surface-card:         #171717;
+  --surface-elevated:     #1f1f1f;
+  --surface-border:       #2a2a2a;
+  --surface-hover:        #242424;
+  --accent-primary-rgb:   153 102 221;
+  --accent-primary:       #9966dd;
+  --accent-secondary-rgb: 100 68 170;
+  --accent-secondary:     #6444aa;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="spark"] {
+  --surface-canvas:       #0b0c0d;
+  --surface-base:         #0f1011;
+  --surface-card:         #151618;
+  --surface-elevated:     #1c1d20;
+  --surface-border:       #252729;
+  --surface-hover:        #1f2123;
+  --accent-primary-rgb:   232 64 16;
+  --accent-primary:       #e84010;
+  --accent-secondary-rgb: 184 48 16;
+  --accent-secondary:     #b83010;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="insight"] {
+  --surface-canvas:       #060c18;
+  --surface-base:         #0a1220;
+  --surface-card:         #0f1a2e;
+  --surface-elevated:     #152238;
+  --surface-border:       #1e3050;
+  --surface-hover:        #1a2a44;
+  --accent-primary-rgb:   58 143 232;
+  --accent-primary:       #3a8fe8;
+  --accent-secondary-rgb: 144 192 240;
+  --accent-secondary:     #90c0f0;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="impulse"] {
+  --surface-canvas:       #140404;
+  --surface-base:         #1a0606;
+  --surface-card:         #220a0a;
+  --surface-elevated:     #2c0e0e;
+  --surface-border:       #401414;
+  --surface-hover:        #361010;
+  --accent-primary-rgb:   232 48 48;
+  --accent-primary:       #e83030;
+  --accent-secondary-rgb: 240 112 32;
+  --accent-secondary:     #f07020;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="growth"] {
+  --surface-canvas:       #050e05;
+  --surface-base:         #081408;
+  --surface-card:         #0c1c0c;
+  --surface-elevated:     #112411;
+  --surface-border:       #183018;
+  --surface-hover:        #142818;
+  --accent-primary-rgb:   64 184 64;
+  --accent-primary:       #40b840;
+  --accent-secondary-rgb: 136 216 48;
+  --accent-secondary:     #88d830;
+  --ink-rgb:              255 255 255;
+}
+
+
+/* =============================================================================
+   DUAL THEMES -- BLACK ATMOSPHERE
+============================================================================= */
+
+[data-theme="scheme"] {
+  --surface-canvas:       #0a0a0a;
+  --surface-base:         #101010;
+  --surface-card:         #171717;
+  --surface-elevated:     #18202e;
+  --surface-border:       #1a3060;
+  --surface-hover:        #203870;
+  --accent-primary-rgb:   85 144 224;
+  --accent-primary:       #5590e0;
+  --accent-secondary-rgb: 136 68 204;
+  --accent-secondary:     #8844cc;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="ruin"] {
+  --surface-canvas:       #0a0a0a;
+  --surface-base:         #100e0e;
+  --surface-card:         #181414;
+  --surface-elevated:     #221818;
+  --surface-border:       #501a1a;
+  --surface-hover:        #602020;
+  --accent-primary-rgb:   224 48 48;
+  --accent-primary:       #e03030;
+  --accent-secondary-rgb: 160 24 64;
+  --accent-secondary:     #a01840;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="dogma"] {
+  --surface-canvas:       #0a0a0a;
+  --surface-base:         #100f0e;
+  --surface-card:         #181614;
+  --surface-elevated:     #22201c;
+  --surface-border:       #4a4030;
+  --surface-hover:        #5a4e3a;
+  --accent-primary-rgb:   200 160 64;
+  --accent-primary:       #c8a040;
+  --accent-secondary-rgb: 232 216 160;
+  --accent-secondary:     #e8d8a0;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="rot"] {
+  --surface-canvas:       #0a0a0a;
+  --surface-base:         #0e100e;
+  --surface-card:         #141814;
+  --surface-elevated:     #182018;
+  --surface-border:       #1e4020;
+  --surface-hover:        #224e24;
+  --accent-primary-rgb:   80 184 64;
+  --accent-primary:       #50b840;
+  --accent-secondary-rgb: 136 102 32;
+  --accent-secondary:     #886620;
+  --ink-rgb:              255 255 255;
+}
+
+/* =============================================================================
+   DUAL THEMES -- BLUE ATMOSPHERE
+============================================================================= */
+
+[data-theme="edict"] {
+  --surface-canvas:       #060c18;
+  --surface-base:         #0a1220;
+  --surface-card:         #0f1a2e;
+  --surface-elevated:     #1e2030;
+  --surface-border:       #4a4030;
+  --surface-hover:        #5a4e3a;
+  --accent-primary-rgb:   80 144 224;
+  --accent-primary:       #5090e0;
+  --accent-secondary-rgb: 224 200 112;
+  --accent-secondary:     #e0c870;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="flux"] {
+  --surface-canvas:       #060c18;
+  --surface-base:         #0a1220;
+  --surface-card:         #0f1a2e;
+  --surface-elevated:     #1e1828;
+  --surface-border:       #501818;
+  --surface-hover:        #602020;
+  --accent-primary-rgb:   58 144 232;
+  --accent-primary:       #3a90e8;
+  --accent-secondary-rgb: 240 96 32;
+  --accent-secondary:     #f06020;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="adapt"] {
+  --surface-canvas:       #060c14;
+  --surface-base:         #091418;
+  --surface-card:         #0e1c20;
+  --surface-elevated:     #142420;
+  --surface-border:       #1a4030;
+  --surface-hover:        #204e38;
+  --accent-primary-rgb:   48 160 208;
+  --accent-primary:       #30a0d0;
+  --accent-secondary-rgb: 48 216 144;
+  --accent-secondary:     #30d890;
+  --ink-rgb:              255 255 255;
+}
+
+
+/* =============================================================================
+   DUAL THEMES -- RED ATMOSPHERE
+============================================================================= */
+
+[data-theme="fury"] {
+  --surface-canvas:       #140606;
+  --surface-base:         #1c0a08;
+  --surface-card:         #240e0a;
+  --surface-elevated:     #261810;
+  --surface-border:       #204018;
+  --surface-hover:        #284e20;
+  --accent-primary-rgb:   216 80 32;
+  --accent-primary:       #d85020;
+  --accent-secondary-rgb: 112 184 32;
+  --accent-secondary:     #70b820;
+  --ink-rgb:              255 255 255;
+}
+
+[data-theme="zeal"] {
+  --surface-canvas:       #140606;
+  --surface-base:         #1c0a08;
+  --surface-card:         #240e0a;
+  --surface-elevated:     #2c1e14;
+  --surface-border:       #604030;
+  --surface-hover:        #705040;
+  --accent-primary-rgb:   224 64 32;
+  --accent-primary:       #e04020;
+  --accent-secondary-rgb: 232 184 64;
+  --accent-secondary:     #e8b840;
+  --ink-rgb:              255 255 255;
+}
+
+
+/* =============================================================================
+   DUAL THEMES -- GREEN ATMOSPHERE
+============================================================================= */
+
+[data-theme="sanctum"] {
+  --surface-canvas:       #050e05;
+  --surface-base:         #081408;
+  --surface-card:         #0c1c0c;
+  --surface-elevated:     #141e14;
+  --surface-border:       #4a4228;
+  --surface-hover:        #5a5030;
+  --accent-primary-rgb:   80 184 64;
+  --accent-primary:       #50b840;
+  --accent-secondary-rgb: 216 184 96;
+  --accent-secondary:     #d8b860;
+  --ink-rgb:              255 255 255;
+}
+
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--surface-base);
+  color: rgb(var(--ink-rgb));
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--surface-hover); }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { opacity: 0.3; }
+
+select option { background: var(--surface-elevated); color: rgb(var(--ink-rgb)); }
+
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 1px solid rgba(var(--accent-primary-rgb) / 0.5);
+  outline-offset: 1px;
+}
+
+@keyframes spark-flicker {
+  0%   { opacity: 0;    filter: drop-shadow(0 0 0px   rgba(var(--accent-primary-rgb) / 0)); }
+  5%   { opacity: 0.9;  filter: drop-shadow(0 0 18px  rgba(var(--accent-primary-rgb) / 0.7)); }
+  9%   { opacity: 0.2;  filter: drop-shadow(0 0 4px   rgba(var(--accent-primary-rgb) / 0.2)); }
+  14%  { opacity: 0.85; filter: drop-shadow(0 0 16px  rgba(var(--accent-primary-rgb) / 0.65)); }
+  19%  { opacity: 0.4;  filter: drop-shadow(0 0 6px   rgba(var(--accent-primary-rgb) / 0.25)); }
+  25%  { opacity: 1;    filter: drop-shadow(0 0 26px  rgba(var(--accent-primary-rgb) / 0.9)); }
+  30%  { opacity: 0.6;  filter: drop-shadow(0 0 10px  rgba(var(--accent-primary-rgb) / 0.4)); }
+  36%  { opacity: 0.95; filter: drop-shadow(0 0 22px  rgba(var(--accent-primary-rgb) / 0.8)); }
+  43%  { opacity: 0.75; filter: drop-shadow(0 0 14px  rgba(var(--accent-primary-rgb) / 0.55)); }
+  52%  { opacity: 1;    filter: drop-shadow(0 0 32px  rgba(var(--accent-primary-rgb) / 1)); }
+  60%  { opacity: 0.95; filter: drop-shadow(0 0 28px  rgba(var(--accent-primary-rgb) / 0.85)); }
+  68%  { opacity: 1;    filter: drop-shadow(0 0 30px  rgba(var(--accent-primary-rgb) / 0.95)); }
+  78%  { opacity: 1;    filter: drop-shadow(0 0 28px  rgba(var(--accent-primary-rgb) / 0.9)); }
+  100% { opacity: 0;    filter: drop-shadow(0 0 0px   rgba(var(--accent-primary-rgb) / 0)); }
+}
+
+@keyframes splash-fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.splash-flicker {
+  animation: spark-flicker 3s ease-out forwards;
+}
+
+.splash-fadeout {
+  animation: splash-fadeout 0.8s ease-in forwards;
+}
