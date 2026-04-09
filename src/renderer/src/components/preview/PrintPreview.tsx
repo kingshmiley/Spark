@@ -1,21 +1,20 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useDeckStore } from '../../store/deckStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUiStore } from '../../store/uiStore'
-import { useAppPrefsStore } from '../../store/appPrefsStore'
+
 import { useLayoutEngine } from '../../hooks/useLayoutEngine'
 import { PreviewPage } from './PreviewPage'
 import { SparkLogo } from '../layout/SparkLogo'
 import { mmToCssPx } from '../../utils/units'
 
-const ZOOM_STEPS = [0.4, 0.55, 0.7, 0.85, 1.0]
+const ZOOM_STEPS = [0.4, 0.55, 0.7, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0]
 
 export function PrintPreview(): React.ReactElement {
   const cards = useDeckStore((s) => s.cards)
   const { settings } = useSettingsStore()
   const { previewPageIndex, setPreviewPage, hoveredCardId } = useUiStore()
-  const { defaultZoomIndex } = useAppPrefsStore()
-  const [zoomIndex, setZoomIndex] = useState(defaultZoomIndex)
+  const [zoomIndex, setZoomIndex] = useState(2)
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -37,6 +36,24 @@ export function PrintPreview(): React.ReactElement {
   const paperCssPxW = mmToCssPx(layout.paperWidthMm)
   const paperCssPxH = mmToCssPx(layout.paperHeightMm)
   const scale = ZOOM_STEPS[zoomIndex]
+
+  // Auto-fit to window on initial mount so the preview looks right on any screen size
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      const container = scrollContainerRef.current
+      if (!container) return
+      const availW = container.clientWidth - 64
+      const availH = container.clientHeight - 64
+      const fitScale = Math.min(availW / paperCssPxW, availH / paperCssPxH)
+      let bestIndex = 0
+      for (let i = 0; i < ZOOM_STEPS.length; i++) {
+        if (ZOOM_STEPS[i] <= fitScale) bestIndex = i
+      }
+      setZoomIndex(bestIndex)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, []) // intentionally runs once on mount
 
   const goToPrev = () => {
     const step = viewMode === 'spread' && isDuplex ? 2 : 1

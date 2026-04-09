@@ -304,6 +304,42 @@ export function PrintSettingsPanel(): React.ReactElement {
           )}
         </Row>
 
+        {/* Cut lines / markers */}
+        <Row label="Cut lines" hint="Cut lines show the card boundary inside the bleed area. Cut markers are short tick marks at the paper edge showing where to cut with a guillotine cutter — they appear in both the preview and the printed output.">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="show-cut-lines"
+                checked={settings.showCutLines !== false}
+                onChange={(e) => upd({ showCutLines: e.target.checked })}
+                className="accent-[var(--accent-primary)]"
+              />
+              <label htmlFor="show-cut-lines" className="text-ink/70 text-xs cursor-pointer">Show cut lines in preview</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="cut-markers-v"
+                checked={settings.cutMarkersV === true}
+                onChange={(e) => upd({ cutMarkersV: e.target.checked })}
+                className="accent-[var(--accent-primary)]"
+              />
+              <label htmlFor="cut-markers-v" className="text-ink/70 text-xs cursor-pointer">Vertical cut markers (top/bottom edge)</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="cut-markers-h"
+                checked={settings.cutMarkersH === true}
+                onChange={(e) => upd({ cutMarkersH: e.target.checked })}
+                className="accent-[var(--accent-primary)]"
+              />
+              <label htmlFor="cut-markers-h" className="text-ink/70 text-xs cursor-pointer">Horizontal cut markers (left/right edge)</label>
+            </div>
+          </div>
+        </Row>
+
         {/* Default card back */}
         <Row label="Default card back">
           <div className="space-y-1.5">

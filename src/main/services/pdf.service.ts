@@ -1,6 +1,6 @@
-import { PDFDocument, rgb } from 'pdf-lib'
-import { readFileSync, existsSync } from 'fs'
-import { extendEdges } from './imageBleed.service'
+import { PDFDocument, rgb, pushGraphicsState, popGraphicsState, clip, endPath, rectangle } from 'pdf-lib'
+import { existsSync } from 'fs'
+import { extendEdges, trimCardImage } from './imageBleed.service'
 import { join } from 'path'
 import { app } from 'electron'
 import type { PrintJob, PrintCard, CardSlot, PrintSettings, CardFace, PageLayout } from '../../shared/types'
@@ -63,17 +63,32 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
 
   // Card slot dimensions in points (includes bleed)
   const bleedMm = settings.bleed.enabled ? settings.bleed.amountMm : 0
-  const slotWPt  = mmToPt(settings.cardWidthMm  + bleedMm * 2)
-  const slotHPt  = mmToPt(settings.cardHeightMm + bleedMm * 2)
-  const spacePt  = mmToPt(settings.cardSpacingMm)
+  const baseSlotWPt = mmToPt(settings.cardWidthMm  + bleedMm * 2)
+  const baseSlotHPt = mmToPt(settings.cardHeightMm + bleedMm * 2)
+  const baseSpacePt = mmToPt(settings.cardSpacingMm)
 
   // Use the first page's col/row count to compute the grid footprint
   // (all pages share the same grid dimensions)
   const firstPage = pages[0]
   const gridCols = firstPage?.cols ?? 1
   const gridRows = firstPage?.rows ?? 1
-  const gridWPt = gridCols * slotWPt + (gridCols - 1) * spacePt
-  const gridHPt = gridRows * slotHPt + (gridRows - 1) * spacePt
+  const baseGridWPt = gridCols * baseSlotWPt + (gridCols - 1) * baseSpacePt
+  const baseGridHPt = gridRows * baseSlotHPt + (gridRows - 1) * baseSpacePt
+
+  // Scale factor based on scale mode
+  let scaleFactor = 1
+  if (settings.scale === 'fit-page') {
+    scaleFactor = Math.min(paper.w / baseGridWPt, paper.h / baseGridHPt, 1)
+  } else if (settings.scale === 'fill-page') {
+    scaleFactor = Math.min(paper.w / baseGridWPt, paper.h / baseGridHPt)
+  }
+  // 'actual-size' keeps scaleFactor = 1
+
+  const slotWPt = baseSlotWPt * scaleFactor
+  const slotHPt = baseSlotHPt * scaleFactor
+  const spacePt = baseSpacePt * scaleFactor
+  const gridWPt = baseGridWPt * scaleFactor
+  const gridHPt = baseGridHPt * scaleFactor
 
   const marginLPt = (paper.w - gridWPt) / 2
   const marginTPt = (paper.h - gridHPt) / 2
@@ -83,11 +98,11 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
 
   async function getOrEmbedImage(doc: PDFDocument, filePath: string) {
     if (!existsSync(filePath)) return null
-    const bytes = readFileSync(filePath)
-    const ext   = filePath.toLowerCase().split('.').pop()
     try {
+      const bytes = await trimCardImage(filePath)
+      const ext   = filePath.toLowerCase().split('.').pop()
       if (ext === 'png') return doc.embedPng(bytes)
-      return doc.embedJpg(bytes) // jpg / jpeg / webp-as-jpg
+      return doc.embedJpg(bytes)
     } catch {
       return null
     }
@@ -122,8 +137,12 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
 
       const imagePath = resolveCardFace(slot, cards, settings, defaultBackPath)
 
+      // Clip all drawing to this slot's rectangle so bleed never overflows into adjacent cards
+      page.pushOperators(pushGraphicsState())
+      page.pushOperators(rectangle(x, y, slotWPt, slotHPt), clip(), endPath())
+
       if (settings.bleed.enabled) {
-        const bleedPt = mmToPt(bleedMm)
+        const bleedPt = mmToPt(bleedMm) * scaleFactor
         const bleedMethod = settings.bleed.method ?? 'black'
 
         if (bleedMethod === 'extend') {
@@ -141,7 +160,9 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
             }
           }
           // Trim line marks the cut boundary
-          page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          if (settings.showCutLines !== false) {
+            page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          }
 
         } else if (bleedMethod === 'scale') {
           // Art fills the full slot — image extends into bleed area
@@ -156,7 +177,9 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
             }
           }
           // Trim line marks the cut boundary
-          page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          if (settings.showCutLines !== false) {
+            page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          }
         } else {
           // 'black' method: full slot filled with black, art inset at card dimensions
           page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, color: rgb(0, 0, 0) })
@@ -171,18 +194,54 @@ export async function generatePdf(job: PrintJob, defaultBackPath: string, regist
             }
           }
           // Trim line marks the cut boundary
-          page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          if (settings.showCutLines !== false) {
+            page.drawRectangle({ x: x + bleedPt, y: y + bleedPt, width: slotWPt - bleedPt * 2, height: slotHPt - bleedPt * 2, borderColor: rgb(0.55, 0.55, 0.55), borderWidth: 0.35 })
+          }
         }
       } else {
         if (!imagePath) {
           page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, color: rgb(0.12, 0.12, 0.12) })
-          continue
-        }
-        const img = await getOrEmbedImage(pdfDoc, imagePath)
-        if (!img) {
-          page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, color: rgb(0.15, 0.15, 0.15) })
         } else {
-          page.drawImage(img, { x, y, width: slotWPt, height: slotHPt })
+          const img = await getOrEmbedImage(pdfDoc, imagePath)
+          if (!img) {
+            page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, color: rgb(0.15, 0.15, 0.15) })
+          } else {
+            page.drawImage(img, { x, y, width: slotWPt, height: slotHPt })
+          }
+        }
+      }
+
+      page.pushOperators(popGraphicsState())
+    } // end slots loop
+
+    // Cut markers at paper edge
+    if (settings.cutMarkersV || settings.cutMarkersH) {
+      const tickLenPt = mmToPt(3)
+      const tickWidth = 0.5
+      const tickColor = rgb(0, 0, 0)
+      const bleedPt   = mmToPt(bleedMm) * scaleFactor
+
+      if (settings.cutMarkersV) {
+        for (let c = 0; c < gridCols; c++) {
+          for (const x of [
+            marginLPt + c * (slotWPt + spacePt) + bleedPt,
+            marginLPt + c * (slotWPt + spacePt) + slotWPt - bleedPt,
+          ]) {
+            page.drawLine({ start: { x, y: paper.h }, end: { x, y: paper.h - tickLenPt }, thickness: tickWidth, color: tickColor })
+            page.drawLine({ start: { x, y: 0 },       end: { x, y: tickLenPt },           thickness: tickWidth, color: tickColor })
+          }
+        }
+      }
+
+      if (settings.cutMarkersH) {
+        for (let r = 0; r < gridRows; r++) {
+          for (const y of [
+            paper.h - (marginTPt + r * (slotHPt + spacePt) + bleedPt),
+            paper.h - (marginTPt + r * (slotHPt + spacePt) + slotHPt - bleedPt),
+          ]) {
+            page.drawLine({ start: { x: 0,       y }, end: { x: tickLenPt,            y }, thickness: tickWidth, color: tickColor })
+            page.drawLine({ start: { x: paper.w, y }, end: { x: paper.w - tickLenPt, y }, thickness: tickWidth, color: tickColor })
+          }
         }
       }
     }

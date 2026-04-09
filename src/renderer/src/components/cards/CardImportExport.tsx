@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import type { PrintCard } from '../../../../shared/types'
 import { bridge } from '../../api/bridge'
 import { useDeckStore } from '../../store/deckStore'
+import { useAddCard } from '../../hooks/useAddCard'
 import { buildPrintCard } from '../../utils/scryfallUtils'
 
 const BASIC_LANDS = new Set([
@@ -34,7 +35,7 @@ function parseArchidektUrl(input: string): string | null {
 
 export function CardImportExport(): React.ReactElement {
   const cards = useDeckStore((s) => s.cards)
-  const addCard = useDeckStore((s) => s.addCard)
+  const addCard = useAddCard()
 
   const [mode, setMode] = useState<'export' | 'import'>('export')
 

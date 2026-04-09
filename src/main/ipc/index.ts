@@ -7,6 +7,7 @@ import { registerAppSettingsHandlers } from './appSettings.handler'
 import { registerLibraryHandlers } from './library.handler'
 import { registerDecksiteHandlers } from './decksite.handler'
 import { registerCalibrationHandlers } from './calibration.handler'
+import { registerFavoritesHandlers } from './favorites.handler'
 
 export function registerAllHandlers(): void {
   registerScryfallHandlers()
@@ -18,4 +19,5 @@ export function registerAllHandlers(): void {
   registerLibraryHandlers()
   registerDecksiteHandlers()
   registerCalibrationHandlers()
+  registerFavoritesHandlers()
 }

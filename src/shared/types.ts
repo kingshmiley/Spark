@@ -84,6 +84,9 @@ export interface PrintSettings {
   cardWidthMm: number  // default 63.5
   cardHeightMm: number // default 88.9
   cardSpacingMm: number // gap between cards on page
+  showCutLines: boolean
+  cutMarkersV: boolean  // vertical cuts — markers at top/bottom paper edge
+  cutMarkersH: boolean  // horizontal cuts — markers at left/right paper edge
 }
 
 // ─── Layout Engine ────────────────────────────────────────────────────────────
@@ -178,6 +181,9 @@ export const DEFAULT_SETTINGS: PrintSettings = {
   cardWidthMm: 63.5,
   cardHeightMm: 88.9,
   cardSpacingMm: 2,
+  showCutLines: false,
+  cutMarkersV: false,
+  cutMarkersH: false,
 }
 
 export const PAPER_SIZES_MM: Record<Exclude<PaperSize, 'custom'>, { w: number; h: number }> = {

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { PrintCard, LibraryCard } from '../../../../shared/types'
 import { bridge } from '../../api/bridge'
-import { useDeckStore } from '../../store/deckStore'
 import { useLibraryStore } from '../../store/libraryStore'
+import { useAddCard } from '../../hooks/useAddCard'
 
 // ─── Local image upload section ───────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ function UploadSection() {
   const [front, setFront] = useState<PickedFile | null>(null)
   const [back, setBack] = useState<PickedFile | null>(null)
   const [saveToLibrary, setSaveToLibrary] = useState(false)
-  const addCard = useDeckStore((s) => s.addCard)
+  const addCard = useAddCard()
   const { saveCard } = useLibraryStore()
 
   const pick = async (target: 'front' | 'back') => {
@@ -156,7 +156,7 @@ function UploadSection() {
 
 function LibrarySection() {
   const { cards: library, loaded, loadLibrary, saveCard, deleteCard } = useLibraryStore()
-  const addCard = useDeckStore((s) => s.addCard)
+  const addCard = useAddCard()
   const [adding, setAdding] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)

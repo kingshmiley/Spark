@@ -1,6 +1,7 @@
 export const IPC = {
   // Scryfall
   SCRYFALL_SEARCH:       'scryfall:search',       // query: string → IpcResult<ScryfallCard[]>
+  SCRYFALL_AUTOCOMPLETE: 'scryfall:autocomplete', // q: string → IpcResult<string[]>
   SCRYFALL_NAMED:        'scryfall:named',        // name: string → IpcResult<ScryfallCard>
   SCRYFALL_FETCH_IMAGE:  'scryfall:fetch-image',  // imageUri: string, id: string, size: string → IpcResult<string> (cachedPath)
 
@@ -31,6 +32,12 @@ export const IPC = {
   PRESETS_LIST:          'presets:list',          // void → IpcResult<Preset[]>
   PRESETS_SAVE:          'presets:save',          // Preset → IpcResult
   PRESETS_DELETE:        'presets:delete',        // name: string → IpcResult
+
+  // Printing favorites
+  FAVORITES_GET:         'favorites:get',         // cardName: string → IpcResult<string[]> (scryfallIds)
+  FAVORITES_GET_ALL:     'favorites:get-all',     // void → IpcResult<Record<string, string[]>>
+  FAVORITES_TOGGLE:      'favorites:toggle',       // cardName: string, scryfallId: string → IpcResult<string[]>
+  SCRYFALL_COLLECTION:   'scryfall:collection',   // ids: string[] → IpcResult<ScryfallCard[]>
 
   // Custom card library
   LIBRARY_LIST:          'library:list',           // void → IpcResult<LibraryCard[]>

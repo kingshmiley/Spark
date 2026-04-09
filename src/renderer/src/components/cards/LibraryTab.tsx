@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { PrintCard, LibraryCard } from '../../../../shared/types'
 import { bridge } from '../../api/bridge'
-import { useDeckStore } from '../../store/deckStore'
 import { useLibraryStore } from '../../store/libraryStore'
+import { useAddCard } from '../../hooks/useAddCard'
 
 export function LibraryTab(): React.ReactElement {
   const { cards: library, loaded, loadLibrary, saveCard, deleteCard } = useLibraryStore()
-  const addCard = useDeckStore((s) => s.addCard)
+  const addCard = useAddCard()
   const [adding, setAdding] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 

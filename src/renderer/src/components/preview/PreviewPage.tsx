@@ -128,7 +128,7 @@ export function PreviewPage({
             )}
 
             {/* Bleed trim line — marks the cut boundary */}
-            {settings.bleed.enabled && !slot.isEmpty && (
+            {settings.bleed.enabled && settings.showCutLines !== false && !slot.isEmpty && (
               <div style={{
                 position: 'absolute',
                 left: bleedPx,
@@ -157,6 +157,41 @@ export function PreviewPage({
           </div>
         )
       })}
+
+      {/* Cut markers at paper edge */}
+      {(settings.cutMarkersV || settings.cutMarkersH) && (() => {
+        const tickLen = Math.max(5, 6 * scale)
+        const tickW   = Math.max(0.75, scale * 0.75)
+        const color   = 'rgba(255,255,255,0.5)'
+
+        const xPos: number[] = []
+        const yPos: number[] = []
+        for (let c = 0; c < page.cols; c++) {
+          xPos.push(marginL + c * (slotW + gap) + bleedPx)
+          xPos.push(marginL + c * (slotW + gap) + slotW - bleedPx)
+        }
+        for (let r = 0; r < page.rows; r++) {
+          yPos.push(marginT + r * (slotH + gap) + bleedPx)
+          yPos.push(marginT + r * (slotH + gap) + slotH - bleedPx)
+        }
+
+        return (
+          <>
+            {settings.cutMarkersV && xPos.map((x, i) => (
+              <React.Fragment key={`cm-x-${i}`}>
+                <div style={{ position: 'absolute', left: x - tickW / 2, top: 0, width: tickW, height: tickLen, backgroundColor: color, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', left: x - tickW / 2, bottom: 0, width: tickW, height: tickLen, backgroundColor: color, pointerEvents: 'none' }} />
+              </React.Fragment>
+            ))}
+            {settings.cutMarkersH && yPos.map((y, i) => (
+              <React.Fragment key={`cm-y-${i}`}>
+                <div style={{ position: 'absolute', top: y - tickW / 2, left: 0, height: tickW, width: tickLen, backgroundColor: color, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: y - tickW / 2, right: 0, height: tickW, width: tickLen, backgroundColor: color, pointerEvents: 'none' }} />
+              </React.Fragment>
+            ))}
+          </>
+        )
+      })()}
 
       {/* Page label */}
       <div style={{

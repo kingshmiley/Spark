@@ -9,7 +9,6 @@ import { bridge } from '../../api/bridge'
 import type { Preset, PrintSettings } from '../../../../shared/types'
 import docsContent from '../../assets/docs.md?raw'
 
-const ZOOM_LABELS = ['40%', '55%', '70%', '85%', '100%']
 
 const THEMES = [
   { id: 'spark',    name: 'Spark',    pips: [] },
@@ -54,9 +53,9 @@ export function AppSettingsModal(): React.ReactElement | null {
   const { appSettingsOpen, setAppSettingsOpen } = useUiStore()
   const { settings, setSettings } = useSettingsStore()
   const { presets, loadPresets, savePreset, deletePreset } = usePresetsStore()
-  const { confirmClearAll, defaultZoomIndex, showSplash, defaultPresetName, printMethod, sumatraPath, theme, searchMode,
+  const { confirmClearAll, showSplash, defaultPresetName, printMethod, sumatraPath, theme, searchMode,
           registrationOffsetX, registrationOffsetY,
-          setConfirmClearAll, setDefaultZoomIndex, setShowSplash, setDefaultPresetName, setPrintMethod, setSumatraPath, setTheme, setSearchMode,
+          setConfirmClearAll, setShowSplash, setDefaultPresetName, setPrintMethod, setSumatraPath, setTheme, setSearchMode,
           setRegistrationOffset, setTourCompleted } = useAppPrefsStore()
   const startTour = useTourStore((s) => s.startTour)
 
@@ -394,25 +393,6 @@ export function AppSettingsModal(): React.ReactElement | null {
                   </p>
                 </div>
 
-                <div>
-                  <label className="text-ink/70 text-xs font-medium block mb-1.5">Default preview zoom</label>
-                  <div className="flex gap-1">
-                    {ZOOM_LABELS.map((label, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setDefaultZoomIndex(i)}
-                        className={`flex-1 text-xs rounded-md py-1 border transition-all ${
-                          defaultZoomIndex === i
-                            ? 'bg-accent/15 border-accent/50 text-accent/70'
-                            : 'border-surface-border text-ink/30 hover:text-ink/70 hover:border-surface-hover bg-surface-elevated'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="border-t border-surface-border pt-5">
                   <p className="text-ink/35 text-xs mb-3">
                     Replay the guided tour to walk through the app again from the beginning.
@@ -567,6 +547,7 @@ export function AppSettingsModal(): React.ReactElement | null {
 
                   <div className="mt-4 pt-3 border-t border-surface-border">
                     <p className="text-ink/40 text-xs mb-2">Not sure of your offset? Print a calibration sheet.</p>
+                    <p className="text-ink/30 text-xs mb-2">The calibration sheet will reflect the registration offset values set above.</p>
                     <div className="flex items-center gap-2">
                       <select
                         value={calibPaperSize}
@@ -587,6 +568,8 @@ export function AppSettingsModal(): React.ReactElement | null {
                             orientation: s.orientation,
                             customPaperWidthMm: s.customPaperWidthMm,
                             customPaperHeightMm: s.customPaperHeightMm,
+                            offsetX: registrationOffsetX,
+                            offsetY: registrationOffsetY,
                           })
                           setCalibStatus(r.ok ? null : (r.error ?? 'Failed'))
                         }}

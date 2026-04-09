@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { PrintCard } from '../../../../shared/types'
 import { bridge } from '../../api/bridge'
-import { useDeckStore } from '../../store/deckStore'
+import { useAddCard } from '../../hooks/useAddCard'
 
 interface PickedFile { path: string; dataUrl: string }
 
@@ -10,7 +10,7 @@ export function LocalImageUpload(): React.ReactElement {
   const [name, setName] = useState('')
   const [front, setFront] = useState<PickedFile | null>(null)
   const [back, setBack] = useState<PickedFile | null>(null)
-  const addCard = useDeckStore((s) => s.addCard)
+  const addCard = useAddCard()
 
   const pick = async (target: 'front' | 'back') => {
     const result = await bridge.openImageFile()

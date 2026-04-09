@@ -29,6 +29,7 @@ export function CardList(): React.ReactElement {
   const { setPreviewPage, setHoveredCardId } = useUiStore()
 
   const [collapsedPages, setCollapsedPages] = useState<Set<number>>(new Set())
+  const [confirmingClear, setConfirmingClear] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -98,34 +99,46 @@ export function CardList(): React.ReactElement {
 
   const total = cards.reduce((sum, c) => sum + c.quantity, 0)
 
-  if (cards.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
-        <span className="text-ink/8 text-4xl select-none">⊟</span>
-        <p className="text-ink/20 text-xs leading-relaxed max-w-[180px]">
-          Search for cards or add local images to build your print list.
-        </p>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
+      {cards.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <span className="text-ink/8 text-4xl select-none">⊟</span>
+          <p className="text-ink/20 text-xs leading-relaxed max-w-[180px]">
+            Search for cards or add local images to build your print list.
+          </p>
+        </div>
+      ) : (
+      <>
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-surface-border flex-shrink-0 bg-surface-card">
         <div className="flex items-center gap-2">
           <span className="text-ink/35 text-xs font-medium">{cards.length} card{cards.length !== 1 ? 's' : ''}</span>
           <span className="w-px h-3 bg-surface-border" />
           <span className="text-ink/20 text-xs">{total} slots</span>
         </div>
-        <button
-          onClick={() => {
-            if (confirmClearAll && !window.confirm('Remove all cards from the print list?')) return
-            clearAll()
-          }}
-          className="text-ink/20 hover:text-red-400 text-xs transition-colors px-1 py-0.5 rounded hover:bg-red-400/8"
-        >
-          Clear all
-        </button>
+        {confirmingClear ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => { clearAll(); setConfirmingClear(false) }}
+              className="text-xs text-red-400 hover:text-red-300 border border-red-700/40 rounded px-1.5 py-0.5 transition-colors"
+            >
+              Clear all
+            </button>
+            <button
+              onClick={() => setConfirmingClear(false)}
+              className="text-xs text-ink/30 hover:text-ink/60 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => confirmClearAll ? setConfirmingClear(true) : clearAll()}
+            className="text-ink/20 hover:text-red-400 text-xs transition-colors px-1 py-0.5 rounded hover:bg-red-400/8"
+          >
+            Clear all
+          </button>
+        )}
       </div>
 
       <DndContext
@@ -186,6 +199,8 @@ export function CardList(): React.ReactElement {
           </div>
         </SortableContext>
       </DndContext>
+      </>
+      )}
     </div>
   )
 

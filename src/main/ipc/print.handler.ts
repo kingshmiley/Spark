@@ -91,7 +91,7 @@ export function registerPrintHandlers(): void {
           return { ok: true }
         }
         return new Promise((resolve) => {
-            const cmd = `"${sumatraPath}" -print-dialog "${tmpPath}"`
+            const cmd = `"${sumatraPath}" -print-dialog -print-settings "noscale" "${tmpPath}"`
           exec(cmd, (error) => {
             // Delay deletion to let SumatraPDF read the file before the process exits
             setTimeout(() => {

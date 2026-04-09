@@ -4,7 +4,8 @@ import type { PrintFile, PrintJob, LibraryCard } from '../../shared/types'
 
 const api = {
   // Scryfall
-  scryfallSearch:     (query: string)                    => ipcRenderer.invoke(IPC.SCRYFALL_SEARCH, query),
+  scryfallSearch:        (query: string, allPrints?: boolean) => ipcRenderer.invoke(IPC.SCRYFALL_SEARCH, query, allPrints),
+  scryfallAutocomplete:  (q: string)                         => ipcRenderer.invoke(IPC.SCRYFALL_AUTOCOMPLETE, q),
   scryfallNamed:      (name: string)                     => ipcRenderer.invoke(IPC.SCRYFALL_NAMED, name),
   scryfallFetchImage: (imageUri: string, id: string, size: string) => ipcRenderer.invoke(IPC.SCRYFALL_FETCH_IMAGE, imageUri, id, size),
 
@@ -42,6 +43,14 @@ const api = {
 
   // Calibration
   printCalibrationSheet: (payload: any)                  => ipcRenderer.invoke(IPC.CALIBRATION_PRINT, payload),
+
+  // Printing favorites
+  favoritesGet:       (cardName: string)                      => ipcRenderer.invoke(IPC.FAVORITES_GET, cardName),
+  favoritesGetAll:    ()                                      => ipcRenderer.invoke(IPC.FAVORITES_GET_ALL),
+  favoritesToggle:    (cardName: string, scryfallId: string)  => ipcRenderer.invoke(IPC.FAVORITES_TOGGLE, cardName, scryfallId),
+
+  // Scryfall collection
+  scryfallCollection: (ids: string[])                         => ipcRenderer.invoke(IPC.SCRYFALL_COLLECTION, ids),
 
   // Custom card library
   libraryList:        ()                                 => ipcRenderer.invoke(IPC.LIBRARY_LIST),
