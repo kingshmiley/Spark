@@ -14,7 +14,8 @@ export function registerScryfallHandlers(): void {
         q: query,
         unique: allPrints ? 'prints' : 'cards',
         order: 'released',
-        dir: 'desc'
+        dir: 'desc',
+        include_extras: true
       }
 
       const first = await axios.get('https://api.scryfall.com/cards/search', { params, timeout: 15000 })

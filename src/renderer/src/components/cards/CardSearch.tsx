@@ -6,6 +6,7 @@ import { useAppPrefsStore } from '../../store/appPrefsStore'
 import { AdvancedSearch } from './AdvancedSearch'
 import { getCardImageUri, buildPrintCard } from '../../utils/scryfallUtils'
 import { useAddCard } from '../../hooks/useAddCard'
+import { TokenSearch } from './TokenSearch'
 
 // ─── Printing picker (shared between simple and advanced results) ─────────────
 
@@ -375,6 +376,7 @@ function FavoritesView({ onAddCard }: { onAddCard: (card: ScryfallCard) => Promi
 export function CardSearch(): React.ReactElement {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [favoritesOpen, setFavoritesOpen] = useState(false)
+  const [tokenMode, setTokenMode] = useState(false)
 
   // Shared results state
   const [nameResults, setNameResults] = useState<ScryfallCard[]>([])
@@ -463,6 +465,11 @@ export function CardSearch(): React.ReactElement {
     }
   }
 
+  // ── Token mode
+  if (tokenMode) {
+    return <TokenSearch onBack={() => setTokenMode(false)} />
+  }
+
   // ── Printing picker active
   if (selectedName !== null && searchMode === 'select-printing') {
     return (
@@ -523,9 +530,15 @@ export function CardSearch(): React.ReactElement {
         </div>
       )}
 
-      {/* Advanced toggle link */}
+      {/* Token Builder + Advanced toggle */}
       {!favoritesOpen && (
-      <div className="flex justify-end px-3 py-1.5 flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 flex-shrink-0">
+        <button
+          onClick={() => setTokenMode(true)}
+          className="flex items-center gap-1 text-ink/25 hover:text-ink/55 text-xs transition-colors"
+        >
+          Token Builder
+        </button>
         <button
           onClick={toggleAdvanced}
           className="flex items-center gap-1 text-ink/25 hover:text-ink/55 text-xs transition-colors"
