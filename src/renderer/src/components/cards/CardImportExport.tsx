@@ -101,7 +101,31 @@ export function CardImportExport(): React.ReactElement {
     let added = 0
     const failed: string[] = []
 
-    for (const { name, quantity } of filtered) {
+    // Batch-resolve cards that have a Scryfall ID (preserves the specific printing)
+    const withId    = filtered.filter((c) => c.scryfallId)
+    const withoutId = filtered.filter((c) => !c.scryfallId)
+
+    // Map scryfallId → quantity for later lookup
+    const quantityById = new Map(withId.map((c) => [c.scryfallId!, c.quantity]))
+
+    if (withId.length > 0) {
+      const ids = withId.map((c) => c.scryfallId!)
+      const collectionResult = await bridge.scryfallCollection(ids)
+      if (collectionResult.ok && collectionResult.data) {
+        for (const card of collectionResult.data) {
+          const quantity = quantityById.get(card.id) ?? 1
+          const pc = await buildPrintCard(card)
+          if (!pc) { failed.push(card.name); continue }
+          addCard({ ...pc, quantity })
+          added++
+        }
+      } else {
+        // Collection call failed — fall back to name lookup for these cards
+        withoutId.push(...withId)
+      }
+    }
+
+    for (const { name, quantity } of withoutId) {
       const result = await bridge.scryfallNamed(name)
       if (!result.ok || !result.data) { failed.push(name); continue }
       const pc = await buildPrintCard(result.data)

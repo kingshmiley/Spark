@@ -7,6 +7,7 @@ export interface DeckCard {
   name: string
   quantity: number
   categories: string[]
+  scryfallId?: string
 }
 
 export interface DeckResult {
@@ -23,7 +24,8 @@ async function fetchArchidekt(id: string): Promise<DeckResult> {
   const cards: DeckCard[] = (data.cards ?? []).map((entry: any) => ({
     name: entry.card?.oracleCard?.name ?? '',
     quantity: entry.quantity ?? 1,
-    categories: Array.isArray(entry.categories) ? entry.categories : []
+    categories: Array.isArray(entry.categories) ? entry.categories : [],
+    scryfallId: entry.card?.uid ?? undefined
   })).filter((c: DeckCard) => c.name)
 
   return { deckName: data.name ?? 'Untitled', cards }
