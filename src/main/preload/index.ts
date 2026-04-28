@@ -50,7 +50,8 @@ const api = {
   favoritesToggle:    (cardName: string, scryfallId: string)  => ipcRenderer.invoke(IPC.FAVORITES_TOGGLE, cardName, scryfallId),
 
   // Scryfall collection
-  scryfallCollection: (ids: string[])                         => ipcRenderer.invoke(IPC.SCRYFALL_COLLECTION, ids),
+  scryfallCollection:    (ids: string[])                         => ipcRenderer.invoke(IPC.SCRYFALL_COLLECTION, ids),
+  scryfallBySetNumber:   (set: string, number: string)          => ipcRenderer.invoke(IPC.SCRYFALL_BY_SET_NUMBER, set, number),
 
   // Custom card library
   libraryList:        ()                                 => ipcRenderer.invoke(IPC.LIBRARY_LIST),

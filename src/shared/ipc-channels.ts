@@ -38,6 +38,7 @@ export const IPC = {
   FAVORITES_GET_ALL:     'favorites:get-all',     // void → IpcResult<Record<string, string[]>>
   FAVORITES_TOGGLE:      'favorites:toggle',       // cardName: string, scryfallId: string → IpcResult<string[]>
   SCRYFALL_COLLECTION:   'scryfall:collection',   // ids: string[] → IpcResult<ScryfallCard[]>
+  SCRYFALL_BY_SET_NUMBER:'scryfall:by-set-number',// set: string, number: string → IpcResult<ScryfallCard>
 
   // Custom card library
   LIBRARY_LIST:          'library:list',           // void → IpcResult<LibraryCard[]>

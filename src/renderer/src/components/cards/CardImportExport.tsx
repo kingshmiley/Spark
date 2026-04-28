@@ -103,15 +103,15 @@ export function CardImportExport(): React.ReactElement {
 
     // Batch-resolve cards that have a Scryfall ID (preserves the specific printing)
     const withId    = filtered.filter((c) => c.scryfallId)
-    const withoutId = filtered.filter((c) => !c.scryfallId)
+    const nameFallback = filtered.filter((c) => !c.scryfallId)
 
-    // Map scryfallId → quantity for later lookup
     const quantityById = new Map(withId.map((c) => [c.scryfallId!, c.quantity]))
 
     if (withId.length > 0) {
       const ids = withId.map((c) => c.scryfallId!)
       const collectionResult = await bridge.scryfallCollection(ids)
-      if (collectionResult.ok && collectionResult.data) {
+      if (collectionResult.ok && collectionResult.data && collectionResult.data.length > 0) {
+        const returnedIds = new Set(collectionResult.data.map((c) => c.id))
         for (const card of collectionResult.data) {
           const quantity = quantityById.get(card.id) ?? 1
           const pc = await buildPrintCard(card)
@@ -119,13 +119,15 @@ export function CardImportExport(): React.ReactElement {
           addCard({ ...pc, quantity })
           added++
         }
+        // Any IDs Scryfall didn't recognise fall back to name lookup
+        nameFallback.push(...withId.filter((c) => !returnedIds.has(c.scryfallId!)))
       } else {
-        // Collection call failed — fall back to name lookup for these cards
-        withoutId.push(...withId)
+        // Collection call failed or returned nothing — fall back to name for all
+        nameFallback.push(...withId)
       }
     }
 
-    for (const { name, quantity } of withoutId) {
+    for (const { name, quantity } of nameFallback) {
       const result = await bridge.scryfallNamed(name)
       if (!result.ok || !result.data) { failed.push(name); continue }
       const pc = await buildPrintCard(result.data)
@@ -144,15 +146,23 @@ export function CardImportExport(): React.ReactElement {
 
   const handleImport = async () => {
     const lines = importText.split('\n')
+
+    type ParsedLine =
+      | { qty: number; set: string; number: string }
+      | { qty: number; name: string }
+
     const parsed = lines
-      .map((line) => {
+      .map((line): ParsedLine | null => {
         const trimmed = line.trim()
         if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#')) return null
-        const match = trimmed.match(/^(\d+)[xX]?\s+(.+)$/)
-        if (match) return { qty: parseInt(match[1]), name: match[2].trim() }
+        // Format: 1x Card Name (SET) 123  or  1 Card Name [SET] #123
+        const setMatch = trimmed.match(/^(\d+)[xX]?\s+.+?\s+[(\[]([A-Za-z0-9]+)[)\]]\s+#?(\w+)$/)
+        if (setMatch) return { qty: parseInt(setMatch[1]), set: setMatch[2], number: setMatch[3] }
+        const nameMatch = trimmed.match(/^(\d+)[xX]?\s+(.+)$/)
+        if (nameMatch) return { qty: parseInt(nameMatch[1]), name: nameMatch[2].trim() }
         return { qty: 1, name: trimmed }
       })
-      .filter(Boolean) as { qty: number; name: string }[]
+      .filter(Boolean) as ParsedLine[]
 
     if (parsed.length === 0) {
       setImportStatus('No valid card names found.')
@@ -165,12 +175,21 @@ export function CardImportExport(): React.ReactElement {
     let added = 0
     const failed: string[] = []
 
-    for (const { qty, name } of parsed) {
-      const result = await bridge.scryfallNamed(name)
-      if (!result.ok || !result.data) { failed.push(name); continue }
+    for (const entry of parsed) {
+      if ('set' in entry) {
+        const result = await bridge.scryfallBySetNumber(entry.set, entry.number)
+        if (!result.ok || !result.data) { failed.push(`${entry.set} #${entry.number}`); continue }
+        const pc = await buildPrintCard(result.data)
+        if (!pc) { failed.push(`${entry.set} #${entry.number}`); continue }
+        addCard({ ...pc, quantity: entry.qty })
+        added++
+        continue
+      }
+      const result = await bridge.scryfallNamed(entry.name)
+      if (!result.ok || !result.data) { failed.push(entry.name); continue }
       const pc = await buildPrintCard(result.data)
-      if (!pc) { failed.push(name); continue }
-      addCard({ ...pc, quantity: qty })
+      if (!pc) { failed.push(entry.name); continue }
+      addCard({ ...pc, quantity: entry.qty })
       added++
     }
 

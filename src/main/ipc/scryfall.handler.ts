@@ -64,6 +64,20 @@ export function registerScryfallHandlers(): void {
     }
   })
 
+  // Fetch a specific printing by set code + collector number
+  ipcMain.handle(IPC.SCRYFALL_BY_SET_NUMBER, async (_event, set: string, number: string): Promise<IpcResult<ScryfallCard>> => {
+    try {
+      const response = await axios.get(`https://api.scryfall.com/cards/${encodeURIComponent(set.toLowerCase())}/${encodeURIComponent(number)}`, {
+        timeout: 15000
+      })
+      return { ok: true, data: response.data as ScryfallCard }
+    } catch (err: any) {
+      if (err?.response?.status === 404) return { ok: false, error: `Card not found: ${set} #${number}` }
+      if (err?.code === 'ENOTFOUND' || err?.code === 'ECONNREFUSED') return { ok: false, error: 'Could not connect to Scryfall.' }
+      return { ok: false, error: err?.message ?? 'Scryfall lookup failed' }
+    }
+  })
+
   // Autocomplete — lightweight name suggestions as the user types
   ipcMain.handle(IPC.SCRYFALL_AUTOCOMPLETE, async (_event, q: string): Promise<IpcResult<string[]>> => {
     try {
