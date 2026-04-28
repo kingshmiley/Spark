@@ -14,6 +14,7 @@ interface Props {
   effectiveMarginLeftMm: number
   effectiveMarginTopMm: number
   highlightCardId?: string | null
+  onCardClick?: (cardId: string) => void
 }
 
 function resolveImageSrc(
@@ -34,7 +35,7 @@ function resolveImageSrc(
 
 export function PreviewPage({
   page, cards, settings, scale, paperWidthMm, paperHeightMm, cardSlotWidthMm, cardSlotHeightMm,
-  effectiveMarginLeftMm, effectiveMarginTopMm, highlightCardId
+  effectiveMarginLeftMm, effectiveMarginTopMm, highlightCardId, onCardClick
 }: Props): React.ReactElement {
   const cardMap = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards])
 
@@ -73,6 +74,7 @@ export function PreviewPage({
         return (
           <div
             key={i}
+            onClick={() => { if (!slot.isEmpty && slot.printCardId && onCardClick) onCardClick(slot.printCardId) }}
             style={{
               position: 'absolute',
               left: x,
@@ -81,6 +83,7 @@ export function PreviewPage({
               height: slotH,
               backgroundColor: slot.isEmpty ? 'transparent' : '#000000',
               overflow: 'hidden',
+              cursor: (!slot.isEmpty && slot.printCardId && onCardClick) ? 'pointer' : 'default',
             }}
           >
             {/* Empty slot indicator — dashed outline shows grid structure */}

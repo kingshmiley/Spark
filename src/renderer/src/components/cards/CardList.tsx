@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -26,10 +26,80 @@ export function CardList(): React.ReactElement {
   const reorderCards = useDeckStore((s) => s.reorderCards)
   const { settings } = useSettingsStore()
   const { confirmClearAll } = useAppPrefsStore()
-  const { setPreviewPage, setHoveredCardId } = useUiStore()
+  const { setPreviewPage, setHoveredCardId, focusedCardId, setFocusedCardId } = useUiStore()
 
   const [collapsedPages, setCollapsedPages] = useState<Set<number>>(new Set())
   const [confirmingClear, setConfirmingClear] = useState(false)
+
+  // ── Search state ──
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0)
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const itemRefsMap = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  const setItemRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
+    if (el) itemRefsMap.current.set(id, el)
+    else itemRefsMap.current.delete(id)
+  }, [])
+
+  const searchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.toLowerCase()
+    return cards.filter((c) => c.displayName.toLowerCase().includes(q)).map((c) => c.id)
+  }, [cards, searchQuery])
+
+  const activeMatchId = searchMatches[searchMatchIndex] ?? null
+
+  // Reset match index when query changes
+  useEffect(() => { setSearchMatchIndex(0) }, [searchQuery])
+
+  // Ctrl+F handler
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault()
+        setSearchOpen(true)
+        setTimeout(() => searchInputRef.current?.focus(), 50)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
+  const openSearch = () => {
+    setSearchOpen(true)
+    setTimeout(() => searchInputRef.current?.focus(), 50)
+  }
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
+
+  const goToNextMatch = useCallback(() => {
+    if (searchMatches.length === 0) return
+    setSearchMatchIndex((i) => (i + 1) % searchMatches.length)
+  }, [searchMatches.length])
+
+  const goToPrevMatch = useCallback(() => {
+    if (searchMatches.length === 0) return
+    setSearchMatchIndex((i) => (i - 1 + searchMatches.length) % searchMatches.length)
+  }, [searchMatches.length])
+
+  // Expand group for a card id and schedule scroll
+  const focusCard = useCallback((cardId: string, groupList: typeof groups) => {
+    const group = groupList.find((g) => g.cards.some((c) => c.id === cardId))
+    if (group && collapsedPages.has(group.pageIndex)) {
+      setCollapsedPages((prev) => {
+        const next = new Set(prev)
+        next.delete(group.pageIndex)
+        return next
+      })
+    }
+    setPendingScrollId(cardId)
+  }, [collapsedPages])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -88,6 +158,31 @@ export function CardList(): React.ReactElement {
     return { cardPageJumps: jumps, groups: grps }
   }, [pages, cards, isDuplex, sheetLabel])
 
+  // Scroll to active search match when it changes
+  useEffect(() => {
+    if (!activeMatchId) return
+    focusCard(activeMatchId, groups)
+  }, [activeMatchId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll to card focused from preview click
+  useEffect(() => {
+    if (!focusedCardId) return
+    focusCard(focusedCardId, groups)
+  }, [focusedCardId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Execute pending scroll after group expansion renders
+  useEffect(() => {
+    if (!pendingScrollId) return
+    const el = itemRefsMap.current.get(pendingScrollId)
+    if (!el) return
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    setPendingScrollId(null)
+    // Clear focused highlight after a moment
+    if (focusedCardId === pendingScrollId) {
+      setTimeout(() => setFocusedCardId(null), 1400)
+    }
+  }, [pendingScrollId, collapsedPages]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const toggleCollapse = (pageIndex: number) => {
     setCollapsedPages((prev) => {
       const next = new Set(prev)
@@ -116,30 +211,76 @@ export function CardList(): React.ReactElement {
           <span className="w-px h-3 bg-surface-border" />
           <span className="text-ink/20 text-xs">{total} slots</span>
         </div>
-        {confirmingClear ? (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => { clearAll(); setConfirmingClear(false) }}
-              className="text-xs text-red-400 hover:text-red-300 border border-red-700/40 rounded px-1.5 py-0.5 transition-colors"
-            >
-              Clear all
-            </button>
-            <button
-              onClick={() => setConfirmingClear(false)}
-              className="text-xs text-ink/30 hover:text-ink/60 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
-        ) : (
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => confirmClearAll ? setConfirmingClear(true) : clearAll()}
-            className="text-ink/20 hover:text-red-400 text-xs transition-colors px-1 py-0.5 rounded hover:bg-red-400/8"
-          >
-            Clear all
-          </button>
-        )}
+            onClick={openSearch}
+            title="Search cards (Ctrl+F)"
+            className={`w-5 h-5 flex items-center justify-center rounded text-sm transition-colors ${
+              searchOpen ? 'text-accent/70' : 'text-ink/20 hover:text-ink/55 hover:bg-surface-elevated'
+            }`}
+          >⌕</button>
+          {confirmingClear ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { clearAll(); setConfirmingClear(false) }}
+                className="text-xs text-red-400 hover:text-red-300 border border-red-700/40 rounded px-1.5 py-0.5 transition-colors"
+              >Clear all</button>
+              <button
+                onClick={() => setConfirmingClear(false)}
+                className="text-xs text-ink/30 hover:text-ink/60 transition-colors"
+              >✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => confirmClearAll ? setConfirmingClear(true) : clearAll()}
+              className="text-ink/20 hover:text-red-400 text-xs transition-colors px-1 py-0.5 rounded hover:bg-red-400/8"
+            >Clear all</button>
+          )}
+        </div>
       </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-surface-border flex-shrink-0 bg-surface">
+          <span className="text-ink/25 text-xs pl-0.5 flex-shrink-0">⌕</span>
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.shiftKey ? goToPrevMatch() : goToNextMatch() }
+              if (e.key === 'Escape') { closeSearch() }
+              if (e.key === 'ArrowDown') { e.preventDefault(); goToNextMatch() }
+              if (e.key === 'ArrowUp') { e.preventDefault(); goToPrevMatch() }
+            }}
+            placeholder="Search cards..."
+            className="flex-1 bg-transparent text-ink text-xs focus:outline-none placeholder-ink/20 min-w-0"
+          />
+          {searchQuery.trim() && (
+            <span className="text-ink/25 text-xs flex-shrink-0 tabular-nums">
+              {searchMatches.length === 0 ? 'No matches' : `${searchMatchIndex + 1} / ${searchMatches.length}`}
+            </span>
+          )}
+          <button
+            onClick={goToPrevMatch}
+            disabled={searchMatches.length <= 1}
+            title="Previous match (Shift+Enter)"
+            className="text-ink/30 hover:text-ink disabled:opacity-20 w-5 h-5 flex items-center justify-center rounded hover:bg-surface-elevated transition-colors text-xs"
+          >↑</button>
+          <button
+            onClick={goToNextMatch}
+            disabled={searchMatches.length <= 1}
+            title="Next match (Enter)"
+            className="text-ink/30 hover:text-ink disabled:opacity-20 w-5 h-5 flex items-center justify-center rounded hover:bg-surface-elevated transition-colors text-xs"
+          >↓</button>
+          <button
+            onClick={closeSearch}
+            title="Close (Escape)"
+            className="text-ink/25 hover:text-ink/60 w-5 h-5 flex items-center justify-center rounded hover:bg-surface-elevated transition-colors text-xs"
+          >✕</button>
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -180,6 +321,13 @@ export function CardList(): React.ReactElement {
                           key={card.id}
                           card={card}
                           pageJumps={cardPageJumps.get(card.id) ?? []}
+                          containerRef={setItemRef(card.id)}
+                          highlight={
+                            card.id === activeMatchId ? 'activeMatch'
+                            : card.id === focusedCardId ? 'focused'
+                            : searchMatches.includes(card.id) ? 'match'
+                            : null
+                          }
                         />
                       ))}
                     </div>
@@ -193,6 +341,13 @@ export function CardList(): React.ReactElement {
                   key={card.id}
                   card={card}
                   pageJumps={cardPageJumps.get(card.id) ?? []}
+                  containerRef={setItemRef(card.id)}
+                  highlight={
+                    card.id === activeMatchId ? 'activeMatch'
+                    : card.id === focusedCardId ? 'focused'
+                    : searchMatches.includes(card.id) ? 'match'
+                    : null
+                  }
                 />
               ))
             )}

@@ -13,7 +13,7 @@ const ZOOM_STEPS = [0.4, 0.55, 0.7, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0]
 export function PrintPreview(): React.ReactElement {
   const cards = useDeckStore((s) => s.cards)
   const { settings } = useSettingsStore()
-  const { previewPageIndex, setPreviewPage, hoveredCardId } = useUiStore()
+  const { previewPageIndex, setPreviewPage, hoveredCardId, setFocusedCardId, setActivePanel } = useUiStore()
   const [zoomIndex, setZoomIndex] = useState(2)
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -73,6 +73,11 @@ export function PrintPreview(): React.ReactElement {
       }
       return next
     })
+  }
+
+  const handleCardClick = (cardId: string) => {
+    setActivePanel('cards')
+    setFocusedCardId(cardId)
   }
 
   const handleZoomFit = () => {
@@ -250,6 +255,7 @@ export function PrintPreview(): React.ReactElement {
                 effectiveMarginLeftMm={layout.effectiveMarginLeftMm}
                 effectiveMarginTopMm={layout.effectiveMarginTopMm}
                 highlightCardId={hoveredCardId}
+                onCardClick={handleCardClick}
               />
             </div>
           )}
@@ -267,6 +273,7 @@ export function PrintPreview(): React.ReactElement {
                 effectiveMarginLeftMm={layout.effectiveMarginLeftMm}
                 effectiveMarginTopMm={layout.effectiveMarginTopMm}
                 highlightCardId={hoveredCardId}
+                onCardClick={handleCardClick}
               />
             </div>
           )}

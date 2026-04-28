@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { PrintCard, CardFace, ScryfallCard } from '../../../../shared/types'
@@ -10,6 +10,8 @@ import { getCardImageUri, getCardBackUri } from '../../utils/scryfallUtils'
 interface Props {
   card: PrintCard
   pageJumps: { label: string; pageIndex: number }[]
+  containerRef?: (el: HTMLDivElement | null) => void
+  highlight?: 'focused' | 'activeMatch' | 'match' | null
 }
 
 function PageBadge({ pageJumps }: { pageJumps: { label: string; pageIndex: number }[] }) {
@@ -212,7 +214,7 @@ function PrintingPicker({ card, onClose }: { card: PrintCard; onClose: () => voi
   )
 }
 
-export function CardListItem({ card, pageJumps }: Props): React.ReactElement {
+export function CardListItem({ card, pageJumps, containerRef, highlight }: Props): React.ReactElement {
   const { removeCard, setCardQuantity, setCardBack } = useDeckStore()
   const { setHoveredCardId } = useUiStore()
   const [showBackPicker, setShowBackPicker] = useState(false)
@@ -220,6 +222,11 @@ export function CardListItem({ card, pageJumps }: Props): React.ReactElement {
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id })
+
+  const mergedRef = useCallback((el: HTMLDivElement | null) => {
+    setNodeRef(el)
+    containerRef?.(el)
+  }, [setNodeRef, containerRef])
 
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1 }
 
@@ -242,13 +249,19 @@ export function CardListItem({ card, pageJumps }: Props): React.ReactElement {
     setShowBackPicker(false)
   }
 
+  const borderClass = isDragging
+    ? 'border-accent/40 bg-surface-elevated'
+    : highlight === 'focused' || highlight === 'activeMatch'
+      ? 'border-accent/60 bg-accent/5'
+      : highlight === 'match'
+        ? 'border-amber-500/40 bg-amber-500/5'
+        : 'border-surface-border bg-surface-elevated hover:border-surface-hover'
+
   return (
     <div
-      ref={setNodeRef}
+      ref={mergedRef}
       style={style}
-      className={`group rounded-md border transition-colors ${
-        isDragging ? 'border-accent/40 bg-surface-elevated' : 'border-surface-border bg-surface-elevated hover:border-surface-hover'
-      }`}
+      className={`group rounded-md border transition-colors ${borderClass}`}
       onMouseEnter={() => setHoveredCardId(card.id)}
       onMouseLeave={() => setHoveredCardId(null)}
     >

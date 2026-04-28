@@ -13,6 +13,7 @@ interface UiState {
   appSettingsOpen: boolean
   appSettingsTab: string | null
   hoveredCardId: string | null
+  focusedCardId: string | null
 
   setActivePanel: (panel: ActivePanel) => void
   setCardTab: (tab: CardTab) => void
@@ -22,6 +23,7 @@ interface UiState {
   setAppSettingsOpen: (open: boolean) => void
   openAppSettingsTab: (tab: string) => void
   setHoveredCardId: (id: string | null) => void
+  setFocusedCardId: (id: string | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -34,6 +36,7 @@ export const useUiStore = create<UiState>((set) => ({
   appSettingsOpen: false,
   appSettingsTab: null,
   hoveredCardId: null,
+  focusedCardId: null,
 
   setActivePanel: (panel) => set({ activePanel: panel, previewPageIndex: 0 }),
   setCardTab: (tab) => set({ cardTab: tab }),
@@ -42,5 +45,6 @@ export const useUiStore = create<UiState>((set) => ({
   setExportError: (error) => set({ exportError: error, isExporting: false }),
   setAppSettingsOpen: (open) => set({ appSettingsOpen: open, appSettingsTab: open ? null : null }),
   openAppSettingsTab: (tab) => set({ appSettingsOpen: true, appSettingsTab: tab }),
-  setHoveredCardId: (id) => set({ hoveredCardId: id })
+  setHoveredCardId: (id) => set({ hoveredCardId: id }),
+  setFocusedCardId: (id) => set({ focusedCardId: id }),
 }))
