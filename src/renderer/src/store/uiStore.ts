@@ -38,7 +38,7 @@ export const useUiStore = create<UiState>((set) => ({
   hoveredCardId: null,
   focusedCardId: null,
 
-  setActivePanel: (panel) => set({ activePanel: panel, previewPageIndex: 0 }),
+  setActivePanel: (panel) => set({ activePanel: panel }),
   setCardTab: (tab) => set({ cardTab: tab }),
   setPreviewPage: (index) => set({ previewPageIndex: index }),
   setExporting: (active, message = '') => set({ isExporting: active, exportMessage: message, exportError: null }),

@@ -158,10 +158,12 @@ export function CardList(): React.ReactElement {
     return { cardPageJumps: jumps, groups: grps }
   }, [pages, cards, isDuplex, sheetLabel])
 
-  // Scroll to active search match when it changes
+  // Scroll to active search match when it changes, and jump preview to that page
   useEffect(() => {
     if (!activeMatchId) return
     focusCard(activeMatchId, groups)
+    const jumps = cardPageJumps.get(activeMatchId)
+    if (jumps && jumps.length > 0) setPreviewPage(jumps[0].pageIndex)
   }, [activeMatchId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to card focused from preview click
